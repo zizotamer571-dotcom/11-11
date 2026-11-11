@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For My Kitten</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --burgundy-dark: #1a050f;
+            --burgundy-light: #4a0d26;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle at center, var(--burgundy-light) 0%, var(--burgundy-dark) 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* Ambient floating orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: 0;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .orb-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: #ff4d6d; }
+        .orb-2 { bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: #800f2f; }
+        
+        .screen {
+            transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #entry-screen {
+            z-index: 50;
+            justify-content: center;
+            background: radial-gradient(circle at center, rgba(74, 13, 38, 0.95) 0%, rgba(26, 5, 15, 0.98) 100%);
+        }
+
+        #main-screen, #flower-screen {
+            z-index: 40;
+            opacity: 0;
+            pointer-events: none;
+            position: relative; 
+            min-height: 100vh;
+            padding: 3rem 1rem;
+        }
+
+        /* Envelope animations */
+        .envelope-container {
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: pulse-gentle 3s infinite;
+        }
+        .envelope-container:hover {
+            transform: scale(1.1) translateY(-10px);
+            filter: drop-shadow(0 0 25px rgba(255, 105, 180, 0.6));
+        }
+        @keyframes pulse-gentle { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .envelope-opened { transform: scale(1.5) translateY(20px) !important; opacity: 0; }
+        .text-glow { text-shadow: 0 0 15px rgba(255, 182, 193, 0.5); }
+        .letter-text { font-family: 'Poppins', sans-serif; line-height: 1.8; }
+        .signature { font-family: 'Playfair Display', serif; }
+
+        /* Falling Background Petals */
+        .bg-petal {
+            position: fixed;
+            background: radial-gradient(circle, #ff4d6d 0%, #c9184a 100%);
+            border-radius: 15px 0 15px 0;
+            pointer-events: none;
+            z-index: 5;
+            box-shadow: 0 0 10px rgba(255, 77, 109, 0.5);
+            animation: fall linear infinite;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-10vh) rotate(0deg) scale(0.5); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(110vh) rotate(720deg) scale(1.2); opacity: 0; }
+        }
+
+        /* --- FLOWER MINIGAME CSS --- */
+        .flower-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 40px auto 20px auto;
+            transition: opacity 1s ease;
+        }
+
+        /* Center of the flower */
+        .flower-center {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            background: radial-gradient(circle, #ffeb3b 0%, #ffc107 60%, #ff9800 100%);
+            border-radius: 50%;
+            top: 115px;
+            left: 115px;
+            z-index: 10;
+            box-shadow: inset 0 0 10px rgba(230, 81, 0, 0.6), 0 5px 15px rgba(0,0,0,0.3);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: center;
+            gap: 2px;
+            padding: 10px;
+            transition: opacity 1s ease, transform 1s ease;
+        }
+
+        .pollen-dot {
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 2px rgba(0,0,0,0.2);
+        }
+
+        /* The 5 Petals */
+        .petal {
+            position: absolute;
+            width: 120px;
+            height: 160px;
+            background: radial-gradient(ellipse at 50% 10%, #fff0f5 0%, #f8bbd0 60%, #f06292 100%);
+            border: 4px solid #d81b60;
+            border-radius: 50% 50% 20% 20% / 60% 60% 40% 40%;
+            top: 5px;
+            left: 90px;
+            transform-origin: 50% 145px;
+            cursor: pointer;
+            transition: transform 0.3s ease, filter 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            z-index: 5;
+        }
+        
+        .petal:hover {
+            filter: brightness(1.1) drop-shadow(0 0 10px rgba(255,105,180,0.5));
+        }
+
+        .petal-0 { transform: rotate(0deg); --rot: 0deg; }
+        .petal-1 { transform: rotate(72deg); --rot: 72deg; }
+        .petal-2 { transform: rotate(144deg); --rot: 144deg; }
+        .petal-3 { transform: rotate(216deg); --rot: 216deg; }
+        .petal-4 { transform: rotate(288deg); --rot: 288deg; }
+
+        @keyframes pluckPetal {
+            0% { transform: rotate(var(--rot)) translateY(0) scale(1); opacity: 1; }
+            20% { transform: rotate(calc(var(--rot) + 15deg)) translateY(-30px) scale(1.05); opacity: 1; }
+            100% { transform: rotate(calc(var(--rot) + 80deg)) translateY(400px) scale(0.7); opacity: 0; }
+        }
+        .plucked {
+            animation: pluckPetal 1.5s forwards cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        /* --- FLASHCARDS CSS --- */
+        .flashcard-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            max-width: 320px;
+            height: 250px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease 0.5s;
+        }
+        .flashcard-container.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .flashcard {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            /* Updated to a warmer, richer pink glass gradient */
+            background: linear-gradient(145deg, rgba(255, 182, 193, 0.2), rgba(201, 24, 74, 0.3));
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 182, 193, 0.4);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4), inset 0 0 15px rgba(255, 182, 193, 0.1);
+            cursor: pointer;
+        }
+        .flashcard p {
+            font-size: 1.15rem;
+            color: #fff0f5;
+            font-weight: 300;
+            line-height: 1.6;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .swipe-out {
+            transform: translateX(120%) rotate(15deg) scale(0.9) !important;
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+
+        .z-a-symbol {
+            font-family: 'Playfair Display', serif;
+            font-size: 4.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffb3c6, #ff4d6d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px rgba(255, 77, 109, 0.8));
+            animation: pulse-glow 2s infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { filter: drop-shadow(0 0 15px rgba(255, 77, 109, 0.6)); transform: scale(1); }
+            50% { filter: drop-shadow(0 0 25px rgba(255, 77, 109, 1)); transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-pink-500 selection:text-white">
+
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div id="petals-container"></div>
+
+    <!-- 1. ENTRY SCREEN -->
+    <div id="entry-screen" class="screen">
+        <div class="envelope-container flex flex-col items-center justify-center text-center p-8 rounded-3xl" onclick="openMessage()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="url(#envelopeGradient)" class="w-32 h-32 mb-6 drop-shadow-2xl">
+                <defs>
+                    <linearGradient id="envelopeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ffb3c6" />
+                        <stop offset="50%" stop-color="#ff8fab" />
+                        <stop offset="100%" stop-color="#fb6f92" />
+                    </linearGradient>
+                </defs>
+                <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
+                <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
+            </svg>
+            <h2 class="text-2xl font-light text-pink-100 tracking-wide text-glow">Tap the envelope</h2>
+            <p class="text-pink-300/80 text-sm mt-2 tracking-widest uppercase">to open your message</p>
+        </div>
+    </div>
+
+    <!-- 2. MAIN CONTENT SCREEN -->
+    <div id="main-screen" class="screen hidden-initially max-w-2xl mx-auto w-full">
+        
+        <!-- Header -->
+        <header class="text-center mb-10 w-full animate-fade-in-up mt-8">
+            <h1 class="text-3xl sm:text-4xl font-semibold mb-2 tracking-wide text-pink-100 text-glow">
+                Our Journey Together
+            </h1>
+            <p class="text-pink-300/70 font-light tracking-widest uppercase text-xs mt-3 flex items-center justify-center gap-2">
+                <span>Loving you since</span>
+                <span class="font-medium text-pink-200">Sept 7, 2026</span>
+            </p>
+        </header>
+
+        <!-- Time Tracker Section -->
+        <section class="glass rounded-[2rem] p-6 mb-12 w-full">
+            <div class="grid grid-cols-3 gap-3 sm:gap-4 text-center">
+                <div class="flex flex-col items-center justify-center py-5 px-2 rounded-2xl bg-black/20 border border-white/5 transition-transform hover:scale-105">
+                    <span id="t-years" class="text-3xl sm:text-4xl font-semibold text-pink-100 drop-shadow-md">0</span>
+                    <span class="text-[10px] sm:text-xs font-medium text-pink-300/70 uppercase tracking-widest mt-2">Years</span>
+                </div>
+                <div class="flex flex-col items-center justify-center py-5 px-2 rounded-2xl bg-black/20 border border-white/5 transition-transform hover:scale-105">
+                    <span id="t-months" class="text-3xl sm:text-4xl font-semibold text-pink-100 drop-shadow-md">0</span>
+                    <span class="text-[10px] sm:text-xs font-medium text-pink-300/70 uppercase tracking-widest mt-2">Months</span>
+                </div>
+                <div class="flex flex-col items-center justify-center py-5 px-2 rounded-2xl bg-black/20 border border-white/5 transition-transform hover:scale-105">
+                    <span id="t-days" class="text-3xl sm:text-4xl font-semibold text-pink-100 drop-shadow-md">0</span>
+                    <span class="text-[10px] sm:text-xs font-medium text-pink-300/70 uppercase tracking-widest mt-2">Days</span>
+                </div>
+                <div class="flex flex-col items-center justify-center py-5 px-2 rounded-2xl bg-black/20 border border-white/5 transition-transform hover:scale-105">
+                    <span id="t-hours" class="text-3xl sm:text-4xl font-semibold text-pink-100 drop-shadow-md">00</span>
+                    <span class="text-[10px] sm:text-xs font-medium text-pink-300/70 uppercase tracking-widest mt-2">Hours</span>
+                </div>
+                <div class="flex flex-col items-center justify-center py-5 px-2 rounded-2xl bg-black/20 border border-white/5 transition-transform hover:scale-105">
+                    <span id="t-minutes" class="text-3xl sm:text-4xl font-semibold text-pink-100 drop-shadow-md">00</span>
+                    <span class="text-[10px] sm:text-xs font-medium text-pink-300/70 uppercase tracking-widest mt-2">Minutes</span>
+                </div>
+                <div class="flex flex-col items-center justify-center py-5 px-2 rounded-2xl bg-black/20 border border-white/5 transition-transform hover:scale-105">
+                    <span id="t-seconds" class="text-3xl sm:text-4xl font-semibold text-pink-100 drop-shadow-md">00</span>
+                    <span class="text-[10px] sm:text-xs font-medium text-pink-300/70 uppercase tracking-widest mt-2">Seconds</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Spotify Player -->
+        <section class="mb-12 w-full max-w-md mx-auto relative z-10 hover:scale-105 transition-transform duration-300">
+            <iframe style="border-radius:16px" src="https://open.spotify.com/embed/track/2BHxg3zP8IdRvvWPVavzqB?utm_source=generator&theme=0" width="100%" height="152" frameborder="0" loading="lazy" allowfullscreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+        </section>
+
+        <!-- Love Letter Section -->
+        <section class="glass rounded-[2.5rem] p-8 sm:p-12 relative w-full mb-8 border-t-2 border-l-2 border-white/10">
+            <div class="absolute -top-20 -right-20 w-64 h-64 bg-pink-500/10 rounded-full blur-[60px] pointer-events-none"></div>
+            
+            <div class="relative z-10">
+                <h3 class="text-3xl sm:text-4xl font-semibold text-pink-200 mb-8 tracking-wide text-glow">
+                    To my beautiful kitten...
+                </h3>
+                
+                <div class="space-y-6 text-base sm:text-lg text-pink-50/90 font-light letter-text text-justify">
+                    <p>From the very moment you walked into my life, everything changed in the most beautiful way imaginable. You brought colors to my world that I never even knew existed. Every single day I wake up, my first thought is of you, and my heart instantly feels full.</p>
+                    <p>You are my peace in the chaos, my safest place, and my greatest adventure. There is a profound comfort and safety I feel whenever I am with you, a feeling of finally being exactly where I belong.</p>
+                    <p>I want you to know how immensely proud I am to be yours. I cherish every conversation, every silent look, and every tiny moment we share. You are not just my love; you are my best friend, my soulmate, and my entire world.</p>
+                    <p>As we watch these seconds, minutes, and days tick by on our clock, my biggest and most sincere hope is that our relationship will continue to grow, flourish, and deepen forever. I promise to hold your hand through every chapter of our lives, to protect you, to support you, and to love you unconditionally, eternally.</p>
+                </div>
+                
+                <div class="mt-12 pt-8 border-t border-pink-500/20 text-right">
+                    <p class="text-lg text-pink-200/80 mb-2">Forever yours,</p>
+                    <p class="text-4xl sm:text-5xl signature text-pink-100 text-glow">Zeyad</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Next Page Button -->
+        <div class="w-full flex justify-center mb-16 relative z-20">
+            <button onclick="goToFlowerPage()" class="px-8 py-4 glass rounded-full text-pink-100 font-semibold tracking-wider hover:bg-pink-500/20 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,105,180,0.3)] hover:shadow-[0_0_30px_rgba(255,105,180,0.6)]">
+                I have one more surprise for you... 🤍
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. FLOWER & FLASHCARDS SCREEN -->
+    <div id="flower-screen" class="screen hidden-initially w-full max-w-lg mx-auto flex flex-col items-center justify-center relative">
+        
+        <header class="text-center absolute top-12 w-full px-4 z-20" id="flower-header">
+            <h1 class="text-3xl font-semibold mb-2 tracking-wide text-pink-100 text-glow">
+                He loves me...
+            </h1>
+            <p class="text-pink-300/70 font-light text-sm mt-2">
+                Pluck the petals to see what's hidden inside...
+            </p>
+        </header>
+
+        <!-- Flower Interactive Element -->
+        <div id="the-flower" class="flower-container z-10 mt-16">
+            <!-- 5 Petals -->
+            <div class="petal petal-0" onclick="pluckPetal(this)"></div>
+            <div class="petal petal-1" onclick="pluckPetal(this)"></div>
+            <div class="petal petal-2" onclick="pluckPetal(this)"></div>
+            <div class="petal petal-3" onclick="pluckPetal(this)"></div>
+            <div class="petal petal-4" onclick="pluckPetal(this)"></div>
+            
+            <!-- Yellow Dotted Center -->
+            <div id="flower-center" class="flower-center"></div>
+        </div>
+
+        <!-- Flashcards Container -->
+        <div id="flashcard-container" class="flashcard-container z-30">
+            <!-- Z ♡ A Symbol (Bottom Card) -->
+            <div class="flashcard z-[1]">
+                <h1 class="z-a-symbol">Z ♡ A</h1>
+            </div>
+            
+            <!-- Card 5 (NEW) -->
+            <div class="flashcard z-[2]" onclick="swipeCard(this)">
+                <p>My biggest wish is that our relationship continues to grow, flourish, and deepen forever. You are my present, and you are my future. 🤍</p>
+                <span class="text-[10px] text-pink-300/50 mt-6 tracking-widest uppercase">(Tap)</span>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="flashcard z-[3]" onclick="swipeCard(this)">
+                <p>All I want right now is to pull you close, hold you tight, and never let you go. I wish I could hug you right this second.</p>
+                <span class="text-[10px] text-pink-300/50 mt-6 tracking-widest uppercase">(Tap)</span>
+            </div>
+            
+            <!-- Card 3 -->
+            <div class="flashcard z-[4]" onclick="swipeCard(this)">
+                <p>My eyes and my heart belong only to you, A. I wouldn't trade you for the universe. I will protect you and cherish you, always.</p>
+                <span class="text-[10px] text-pink-300/50 mt-6 tracking-widest uppercase">(Tap)</span>
+            </div>
+            
+            <!-- Card 2 -->
+            <div class="flashcard z-[5]" onclick="swipeCard(this)">
+                <p>Whenever you feel sad, lost, or overwhelmed, I promise I will always be right beside you to remind you how loved you are and wouldn't repeat my mistake.</p>
+                <span class="text-[10px] text-pink-300/50 mt-6 tracking-widest uppercase">(Tap)</span>
+            </div>
+
+            <!-- Card 1 (Top Card) -->
+            <div class="flashcard z-[6]" onclick="swipeCard(this)">
+                <p>i love you mommy,and wish we were cuddling rn and i'm obsessed with you. You are my entire world, and I love you more than anything in existence.</p>
+                <span class="text-[10px] text-pink-300/50 mt-6 tracking-widest uppercase">(Tap to read)</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- PAGE TRANSITIONS ---
+        function openMessage() {
+            const entryScreen = document.getElementById('entry-screen');
+            const mainScreen = document.getElementById('main-screen');
+            const envelope = document.querySelector('.envelope-container');
+            
+            envelope.classList.add('envelope-opened');
+            setTimeout(() => {
+                entryScreen.style.opacity = '0';
+                setTimeout(() => {
+                    entryScreen.style.display = 'none';
+                    mainScreen.style.opacity = '1';
+                    mainScreen.style.pointerEvents = 'auto';
+                    mainScreen.style.position = 'relative';
+                }, 1000);
+            }, 500);
+        }
+
+        function goToFlowerPage() {
+            const mainScreen = document.getElementById('main-screen');
+            const flowerScreen = document.getElementById('flower-screen');
+            
+            mainScreen.style.opacity = '0';
+            setTimeout(() => {
+                mainScreen.style.display = 'none';
+                flowerScreen.style.opacity = '1';
+                flowerScreen.style.pointerEvents = 'auto';
+                flowerScreen.style.position = 'relative';
+                startFallingBackgroundPetals(); 
+            }, 1000);
+        }
+
+        // --- TIME TRACKER ---
+        const startDate = new Date('2026-09-07T00:00:00');
+        function updateTracker() {
+            const now = new Date();
+            const diff = now - startDate;
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            const minutes = Math.floor((diff / 1000 / 60) % 60);
+            const seconds = Math.floor((diff / 1000) % 60);
+            
+            const years = Math.floor(days / 365);
+            const months = Math.floor((days % 365) / 30);
+            const remainingDays = (days % 365) % 30;
+            
+            document.getElementById('t-years').innerText = years;
+            document.getElementById('t-months').innerText = months;
+            document.getElementById('t-days').innerText = remainingDays;
+            document.getElementById('t-hours').innerText = hours.toString().padStart(2, '0');
+            document.getElementById('t-minutes').innerText = minutes.toString().padStart(2, '0');
+            document.getElementById('t-seconds').innerText = seconds.toString().padStart(2, '0');
+        }
+        setInterval(updateTracker, 1000);
+        updateTracker();
+
+        // --- FLOWER MINIGAME LOGIC ---
+        let pluckedCount = 0;
+
+        // Generate the pollen dots for the flower center
+        const center = document.getElementById('flower-center');
+        for (let i = 0; i < 16; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'pollen-dot';
+            center.appendChild(dot);
+        }
+
+        function pluckPetal(element) {
+            if (element.classList.contains('plucked')) return;
+
+            element.classList.add('plucked');
+            pluckedCount++;
+
+            const headerTitle = document.querySelector('#flower-header h1');
+            if(pluckedCount === 2) headerTitle.innerText = "He loves me a lot...";
+            if(pluckedCount === 4) headerTitle.innerText = "He loves me completely...";
+
+            if (pluckedCount === 5) {
+                headerTitle.innerText = "For you, my everything.";
+                document.querySelector('#flower-header p').style.opacity = '0'; 
+
+                setTimeout(() => {
+                    center.style.transform = 'scale(0)';
+                    center.style.opacity = '0';
+                    document.getElementById('flashcard-container').classList.add('visible');
+                }, 800);
+            }
+        }
+
+        // --- FLASHCARDS LOGIC ---
+        function swipeCard(cardElement) {
+            cardElement.classList.add('swipe-out');
+        }
+
+        // --- AMBIENT FALLING PETALS ---
+        function startFallingBackgroundPetals() {
+            const container = document.getElementById('petals-container');
+            setInterval(() => {
+                const petal = document.createElement('div');
+                petal.classList.add('bg-petal');
+                
+                const size = Math.random() * 15 + 10;
+                const left = Math.random() * 100;
+                const duration = Math.random() * 5 + 5;
+                
+                petal.style.width = `${size}px`;
+                petal.style.height = `${size}px`;
+                petal.style.left = `${left}vw`;
+                petal.style.animationDuration = `${duration}s`;
+                
+                container.appendChild(petal);
+                setTimeout(() => { petal.remove(); }, duration * 1000);
+            }, 400); 
+        }
+    </script>
+</body>
+</html>
